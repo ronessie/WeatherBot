@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Cloud.Translation.V2;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using System.Net.Http;
+using System.Web;
+using Newtonsoft.Json.Linq;
 using Telegram.Bots.Requests;
-using Telegram.Bots.Types;
+using Telegram.Bot.Types;
 using InlineKeyboardMarkup = Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
@@ -16,25 +20,29 @@ using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
 namespace telegramBot
 {
-
     class Program
     {
         public static string language;
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
-        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        
+        public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
+            CancellationToken cancellationToken)
         {
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var message = update.Message;
-            if(update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+            if (update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
             {
                 if (message.Text.ToLower() == "/start")
                 {
-                    await botClient.SendTextMessageAsync(message.Chat, "Приветик. Введите текст который Вы желаете перевести)");
+                    await botClient.SendTextMessageAsync(message.Chat,
+                        "Приветик. Введите текст который Вы желаете перевести)");
                     return;
                 }
+
                 if (message.Text.ToLower() == "/about")
                 {
-                    await botClient.SendTextMessageAsync(message.Chat, "Это бот переводчик. Он может переводить текст с русского на англиский и наоборот");
+                    await botClient.SendTextMessageAsync(message.Chat,
+                        "Это бот переводчик. Он может переводить текст с русского на англиский и наоборот");
                     return;
                 }
 
@@ -43,6 +51,7 @@ namespace telegramBot
                     await botClient.SendTextMessageAsync(message.Chat, "help");
                     return;
                 }
+
                 if (update.Type != UpdateType.Message)
                     return;
 
@@ -60,7 +69,8 @@ namespace telegramBot
             }
         }
 
-        public static async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        public static async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception,
+            CancellationToken cancellationToken)
         {
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
@@ -85,29 +95,53 @@ namespace telegramBot
             Console.ReadLine();
         }
 
-        public static async void TranslateText(ITelegramBotClient botClient, Update update,
+        public static async void TranslateButtons(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-        }
-
-        public static async void TranslateButtons(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
-        {
-            var message = update.Message;
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
-            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            /*var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new[]
                 {
-                    new []
-                    {
-                        InlineKeyboardButton.WithCallbackData("Англиский", "english"),
-                    },
-                    new []
-                    {
-                        InlineKeyboardButton.WithCallbackData("Русский", "russian"),
-                    }
-                }); 
+                    InlineKeyboardButton.WithCallbackData("Англиский", "english"),
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Русский", "russian"),
+                }
+            });
             await bot.SendTextMessageAsync(message.Chat.Id, "На какой язык перевести?", replyMarkup: inlineKeyboard);
-            return;
+            return;*/
+            
+            //Обычные кнопки, вместо клавиатуры
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new[] // row 1
+                {
+                    new KeyboardButton("Button 1")
+                },
+                new[]
+                {
+                    new KeyboardButton("Button 2")
+                }
+            });
+            if (message.Text == "Button 1")
+            {
+                await botClient.SendTextMessageAsync(message.Chat,
+                    "нажата кнопка 1");
+                
+            }
+            if (message.Text == "Button 2")
+            {
+                await botClient.SendTextMessageAsync(message.Chat,
+                    "нажата кнопка 2");
+            }
+            /*await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "Choose",
+                replyMarkup: keyboard
+            );*/
         }
     }
 }

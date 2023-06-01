@@ -50,3 +50,12 @@ C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\ne
 C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\net7.0\telegramBot.pdb
 C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\net7.0\telegramBot.genruntimeconfig.cache
 C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\net7.0\ref\telegramBot.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Api.Gax.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Api.Gax.Rest.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Apis.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Apis.Auth.PlatformServices.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Apis.Auth.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Apis.Core.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Apis.Translate.v2.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Google.Cloud.Translation.V2.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Microsoft.Bcl.AsyncInterfaces.dll
