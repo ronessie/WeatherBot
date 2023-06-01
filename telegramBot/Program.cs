@@ -35,14 +35,14 @@ namespace telegramBot
                 if (message.Text.ToLower() == "/start")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
-                        "Приветик. Введите текст который Вы желаете перевести)");
+                        "Приветик. Выбери действие которое ты желаешь совершить.");
                     return;
                 }
 
                 if (message.Text.ToLower() == "/about")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
-                        "Это бот переводчик. Он может переводить текст с русского на англиский и наоборот");
+                        "Этот бот Ваш верный помощник в повседневной жизни, с его помощью Вы будете помнить обо всех планах.");
                     return;
                 }
 
@@ -65,7 +65,9 @@ namespace telegramBot
                     chatId: message.Chat.Id,
                     text: "На какой язык Вы желаете перевести?"
                 );*/
-                TranslateButtons(botClient, update, cancellationToken);
+                
+                
+                //TranslateButtons(botClient, update, cancellationToken);
             }
         }
 
@@ -100,30 +102,15 @@ namespace telegramBot
         {
             var message = update.Message;
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
-            /*var inlineKeyboard = new InlineKeyboardMarkup(new[]
-            {
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("Англиский", "english"),
-                },
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("Русский", "russian"),
-                }
-            });
-            await bot.SendTextMessageAsync(message.Chat.Id, "На какой язык перевести?", replyMarkup: inlineKeyboard);
-            return;*/
-            
-            //Обычные кнопки, вместо клавиатуры
             var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new[] // row 1
                 {
-                    new KeyboardButton("Button 1")
+                    new KeyboardButton("Создать напоминание")
                 },
-                new[]
-                {
-                    new KeyboardButton("Button 2")
+                new[] // row 2
+                { 
+                    new KeyboardButton("Список активных напоминаний")
                 }
             });
             if (message.Text == "Button 1")

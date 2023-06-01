@@ -8,6 +8,7 @@
     ".NETCoreApp,Version=v7.0": {
       "telegramBot/1.0.0": {
         "dependencies": {
+          "DeepL.net": "1.7.1",
           "Google.Cloud.Translation.V2": "3.2.0",
           "Newtonsoft.Json": "13.0.3",
           "Telegram.Bot": "19.0.0",
@@ -15,6 +16,18 @@
         },
         "runtime": {
           "telegramBot.dll": {}
+        }
+      },
+      "DeepL.net/1.7.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Http.Polly": "6.0.10",
+          "System.Text.Json": "6.0.0"
+        },
+        "runtime": {
+          "lib/net5.0/DeepL.net.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.7.1.0"
+          }
         }
       },
       "Google.Api.Gax/4.3.1": {
@@ -586,6 +599,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "DeepL.net/1.7.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ypJxXH/9E+4C7DHsFo8epZrxRMpAhOQhOvJdvXPhOtG/c7bIKUgvdHkOmiZ27s56eBH/REWDkHZFq7viNqL7Cg==",
+      "path": "deepl.net/1.7.1",
+      "hashPath": "deepl.net.1.7.1.nupkg.sha512"
     },
     "Google.Api.Gax/4.3.1": {
       "type": "package",
