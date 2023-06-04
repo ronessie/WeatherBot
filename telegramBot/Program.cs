@@ -1,19 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Cloud.Translation.V2;
-using Telegram.Bot;
-using Telegram.Bot.Args;
-using Telegram.Bot.Exceptions;
+﻿using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using System.Net.Http;
-using System.Web;
-using Newtonsoft.Json.Linq;
-using Telegram.Bots.Requests;
-using Telegram.Bot.Types;
-using InlineKeyboardMarkup = Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -22,7 +10,6 @@ namespace telegramBot
 {
     class Program
     {
-        public static string language;
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
         
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
@@ -34,15 +21,15 @@ namespace telegramBot
             {
                 if (message.Text.ToLower() == "/start")
                 {
-                    await botClient.SendTextMessageAsync(message.Chat,
-                        "Приветик. Выбери действие которое ты желаешь совершить.");
+                     await  botClient.SendTextMessageAsync(message.Chat,
+                        "Приветик. Введи свой город что бы узнать погоду.");
                     return;
                 }
 
                 if (message.Text.ToLower() == "/about")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
-                        "Этот бот Ваш верный помощник в повседневной жизни, с его помощью Вы будете помнить обо всех планах.");
+                        "Бот погода станет верным помощником для Вас и будет каждый день уведомлять Вас о погоде за окном.");
                     return;
                 }
 
@@ -61,13 +48,11 @@ namespace telegramBot
                     return;
 
                 Console.WriteLine($"Received a text message in chat {message.Chat.Id}.");
-                /*await botClient.SendTextMessageAsync(
+                botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "На какой язык Вы желаете перевести?"
-                );*/
-                
-                
-                //TranslateButtons(botClient, update, cancellationToken);
+                    text: $"Ваш город: {message.Text}?"
+                );
+                YesNoButtons(botClient, update, cancellationToken);
             }
         }
 
@@ -97,10 +82,41 @@ namespace telegramBot
             Console.ReadLine();
         }
 
+        public static async void YesNoButtons(ITelegramBotClient botClient, Update update,
+            CancellationToken cancellationToken)
+        {
+            var message = update.Message;
+            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Да", "yes")
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Нет", "no")
+                }
+            });
+
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat,
+                text: "",
+                replyMarkup: inlineKeyboard
+            );
+        }
         public static async void TranslateButtons(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             var message = update.Message;
+            /*if (message.Text != null && message.Type == MessageType.Text)
+            {
+                await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}?");
+            }
+            else
+            {
+                message = update.Message;
+                return;
+            }*/
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var keyboard = new ReplyKeyboardMarkup(new[]
             {
