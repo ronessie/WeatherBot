@@ -2,8 +2,12 @@
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram.Bot.Args;
+using Telegram.Bot.Types;
+using static Telegram.Bot.Types.CallbackQuery;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
+
 
 
 namespace telegramBot
@@ -50,7 +54,7 @@ namespace telegramBot
                 Console.WriteLine($"Received a text message in chat {message.Chat.Id}.");
                 botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"Ваш город: {message.Text}?"
+                    text: ""
                 );
                 YesNoButtons(botClient, update, cancellationToken);
             }
@@ -100,9 +104,35 @@ namespace telegramBot
 
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
-                text: "",
+                text: $"Ваш город: {message.Text}?",
                 replyMarkup: inlineKeyboard
             );
+            if (update.CallbackQuery.Data == "yes")
+            {
+                Message sentMessage = await botClient.SendTextMessageAsync(
+                    chatId: update.CallbackQuery.Message.Chat.Id,
+                    text: "Отлично",
+                    cancellationToken: cancellationToken);
+                //ВЫЗОВ МЕТОДА С ПОКАЗОМ ПОГОДЫ И СОЗДАНИЕ КНОПОК В КЛАВЕ
+            }
+            if (update.CallbackQuery.Data == "no")
+            {
+                Message sentMessage = await botClient.SendTextMessageAsync(
+                    chatId: update.CallbackQuery.Message.Chat.Id,
+                    text: "Введите другой город",
+                    cancellationToken: cancellationToken);
+                HandleUpdateAsync(botClient, update, cancellationToken);
+                //ВЫЗОВ МЕТОДА С ПОКАЗОМ ПОГОДЫ И СОЗДАНИЕ КНОПОК В КЛАВЕ
+            }
+            /*botClient.OnCallbackQuery += async (object sc, CallbackQueryEventArgs ev) =>
+            {
+                var buttonId = ev.CallbackQuery.Data;
+                await botClient.AnswerCallbackQueryAsync(
+                    callbackQueryId: ev.CallbackQuery.Id,
+                    text: $"Вы нажали кнопку {buttonId}"
+                );
+            };*/
+
         }
         public static async void TranslateButtons(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
@@ -129,22 +159,7 @@ namespace telegramBot
                     new KeyboardButton("Список активных напоминаний")
                 }
             });
-            if (message.Text == "Button 1")
-            {
-                await botClient.SendTextMessageAsync(message.Chat,
-                    "нажата кнопка 1");
-                
-            }
-            if (message.Text == "Button 2")
-            {
-                await botClient.SendTextMessageAsync(message.Chat,
-                    "нажата кнопка 2");
-            }
-            /*await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: "Choose",
-                replyMarkup: keyboard
-            );*/
+
         }
     }
 }

@@ -40,14 +40,6 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
-            "DeepL.net": {
-              "target": "Package",
-              "version": "[1.7.1, )"
-            },
-            "Google.Cloud.Translation.V2": {
-              "target": "Package",
-              "version": "[3.2.0, )"
-            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
