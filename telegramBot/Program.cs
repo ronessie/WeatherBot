@@ -22,24 +22,6 @@ namespace telegramBot
 {
     class Program
     {
-        /*private readonly IMongoDatabase _database;
-        public Program(string connectionString, string databaseName)
-        {
-            var client = new MongoClient(connectionString);
-            _database = client.GetDatabase(databaseName);
-        }
-        public IMongoCollection<Users> Clients => _database.GetCollection<Users>("Users");
-
-        public void AddClient(Users users)
-        {
-            Clients.InsertOne(users);
-        }
-        public class Users
-        {
-            public string Name { get; set; }
-            public int Id { get; set; }
-            public string City { get; set; }
-        }*/
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
@@ -50,7 +32,6 @@ namespace telegramBot
             {
                 if (message.Text.ToLower() == "/start")
                 {
-                    //Users user = new Users();
                     await botClient.SendTextMessageAsync(message.Chat,
                          "Приветик"); 
                          botClient.SendTextMessageAsync(message.Chat,
@@ -103,9 +84,19 @@ namespace telegramBot
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
 
-
+        public class User
+        {
+            public ObjectId Id { get; set; }
+            public string Name { get; set; }
+            public string NickName { get; set; }
+            public string Sity { get; set; }
+        }
         static void Main(string[] args)
         {
+            var client = new MongoClient("mongodb://localhost:27017");
+            var database = client.GetDatabase("WeatherUsers");
+            var userCollection = database.GetCollection<User>("Users");
+            //var users = (await userCollection.FindAsync(u => u.UserId == telegramUser.Id)).ToList();
             Console.WriteLine("Активизирован бот " + bot.GetMeAsync().Result.FirstName);
 
             var cts = new CancellationTokenSource();
