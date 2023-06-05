@@ -4,7 +4,9 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
+using Telegram.Bots.Types;
 using static Telegram.Bot.Types.CallbackQuery;
+using InlineKeyboardMarkup = Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -15,7 +17,6 @@ namespace telegramBot
     class Program
     {
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
-        
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
@@ -25,8 +26,10 @@ namespace telegramBot
             {
                 if (message.Text.ToLower() == "/start")
                 {
-                     await  botClient.SendTextMessageAsync(message.Chat,
-                        "Приветик. Введи свой город что бы узнать погоду.");
+                     await botClient.SendTextMessageAsync(message.Chat,
+                         "Приветик"); 
+                         botClient.SendTextMessageAsync(message.Chat,
+                        "Введи свой город что бы узнать погоду.");
                     return;
                 }
 
@@ -54,7 +57,7 @@ namespace telegramBot
                 Console.WriteLine($"Received a text message in chat {message.Chat.Id}.");
                 botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: ""
+                    text: $"Ваш город: {message.Text}"
                 );
                 YesNoButtons(botClient, update, cancellationToken);
             }
@@ -90,7 +93,29 @@ namespace telegramBot
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            var inlineKeyboard = new InlineKeyboardMarkup(new[]
+            var keyboard = new ReplyKeyboardMarkup(new[]
+            {
+                new[] // row 1
+                {
+                    new KeyboardButton("Посмотреть погоду")
+                },
+                new[] // row 1
+                {
+                new KeyboardButton("Сменить город")
+                }
+            });
+            await botClient.SendTextMessageAsync(
+                chatId: message.Chat,
+                text: "",
+                replyMarkup: keyboard
+            );
+            if (update.Message.Text=="Посмотреть погоду")
+            {
+                await  botClient.SendTextMessageAsync(message.Chat,
+                    "город указан верно");
+                Weather(botClient, update, cancellationToken);
+            }
+            /*var inlineKeyboard = new InlineKeyboardMarkup(new[]
             {
                 new[]
                 {
@@ -101,29 +126,12 @@ namespace telegramBot
                     InlineKeyboardButton.WithCallbackData("Нет", "no")
                 }
             });
-
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
                 text: $"Ваш город: {message.Text}?",
                 replyMarkup: inlineKeyboard
-            );
-            if (update.CallbackQuery.Data == "yes")
-            {
-                Message sentMessage = await botClient.SendTextMessageAsync(
-                    chatId: update.CallbackQuery.Message.Chat.Id,
-                    text: "Отлично",
-                    cancellationToken: cancellationToken);
-                //ВЫЗОВ МЕТОДА С ПОКАЗОМ ПОГОДЫ И СОЗДАНИЕ КНОПОК В КЛАВЕ
-            }
-            if (update.CallbackQuery.Data == "no")
-            {
-                Message sentMessage = await botClient.SendTextMessageAsync(
-                    chatId: update.CallbackQuery.Message.Chat.Id,
-                    text: "Введите другой город",
-                    cancellationToken: cancellationToken);
-                HandleUpdateAsync(botClient, update, cancellationToken);
-                //ВЫЗОВ МЕТОДА С ПОКАЗОМ ПОГОДЫ И СОЗДАНИЕ КНОПОК В КЛАВЕ
-            }
+            );*/
+            
             /*botClient.OnCallbackQuery += async (object sc, CallbackQueryEventArgs ev) =>
             {
                 var buttonId = ev.CallbackQuery.Data;
@@ -134,32 +142,18 @@ namespace telegramBot
             };*/
 
         }
-        public static async void TranslateButtons(ITelegramBotClient botClient, Update update,
+        public static async void Weather(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            /*if (message.Text != null && message.Type == MessageType.Text)
-            {
-                await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}?");
-            }
-            else
-            {
-                message = update.Message;
-                return;
-            }*/
-            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new[] // row 1
                 {
-                    new KeyboardButton("Создать напоминание")
-                },
-                new[] // row 2
-                { 
-                    new KeyboardButton("Список активных напоминаний")
+                    new KeyboardButton("Узнать погоду")
                 }
             });
-
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
         }
     }
 }
