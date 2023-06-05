@@ -1,12 +1,18 @@
-﻿using Telegram.Bot;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
 using Telegram.Bots.Types;
 using static Telegram.Bot.Types.CallbackQuery;
 using InlineKeyboardMarkup = Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup;
+using Message = Telegram.Bot.Types.Message;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -16,6 +22,24 @@ namespace telegramBot
 {
     class Program
     {
+        /*private readonly IMongoDatabase _database;
+        public Program(string connectionString, string databaseName)
+        {
+            var client = new MongoClient(connectionString);
+            _database = client.GetDatabase(databaseName);
+        }
+        public IMongoCollection<Users> Clients => _database.GetCollection<Users>("Users");
+
+        public void AddClient(Users users)
+        {
+            Clients.InsertOne(users);
+        }
+        public class Users
+        {
+            public string Name { get; set; }
+            public int Id { get; set; }
+            public string City { get; set; }
+        }*/
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
@@ -26,11 +50,20 @@ namespace telegramBot
             {
                 if (message.Text.ToLower() == "/start")
                 {
-                     await botClient.SendTextMessageAsync(message.Chat,
+                    //Users user = new Users();
+                    await botClient.SendTextMessageAsync(message.Chat,
                          "Приветик"); 
                          botClient.SendTextMessageAsync(message.Chat,
-                        "Введи свой город что бы узнать погоду.");
-                    return;
+                        "Введи свой город на англиском языке что бы узнать погоду.");
+                         message = update.Message;
+                         string pattern = "[a-zA-Z]+";
+                         if (!Regex.IsMatch(message.Text, pattern))
+                         {
+                             botClient.SendTextMessageAsync(message.Chat,
+                                 "Введите название города на англиском языке");
+                             return;
+                         }
+                         return;
                 }
 
                 if (message.Text.ToLower() == "/about")
@@ -57,9 +90,10 @@ namespace telegramBot
                 Console.WriteLine($"Received a text message in chat {message.Chat.Id}.");
                 botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: $"Ваш город: {message.Text}"
+                    text: " "
                 );
                 YesNoButtons(botClient, update, cancellationToken);
+                
             }
         }
 
@@ -93,6 +127,8 @@ namespace telegramBot
             CancellationToken cancellationToken)
         {
             var message = update.Message;
+            await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}");
+            
             var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new[] // row 1
@@ -106,13 +142,13 @@ namespace telegramBot
             });
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
-                text: "",
+                text: "Выберите действие",
                 replyMarkup: keyboard
             );
             if (update.Message.Text=="Посмотреть погоду")
             {
-                await  botClient.SendTextMessageAsync(message.Chat,
-                    "город указан верно");
+                //await  botClient.SendTextMessageAsync(message.Chat,
+                  //  "город указан верно");
                 Weather(botClient, update, cancellationToken);
             }
             /*var inlineKeyboard = new InlineKeyboardMarkup(new[]
@@ -146,13 +182,34 @@ namespace telegramBot
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            var keyboard = new ReplyKeyboardMarkup(new[]
+            /*var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new[] // row 1
                 {
                     new KeyboardButton("Узнать погоду")
                 }
             });
+            if (update.Message.Text=="Узнать погоду")
+            {*/
+                await  botClient.SendTextMessageAsync(message.Chat,
+                                    "Погода на сегодня:");
+                var city = "London";
+                var apiKey = "60006c3bff1a26c86b0409860981b5b6";
+                var url = $"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric";
+
+                using var httpClient = new HttpClient();
+                try
+                {
+                    var response = await httpClient.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    await botClient.SendTextMessageAsync(message.Chat, $"weather {responseBody}");
+                }
+                catch (HttpRequestException e)
+                {
+                    Console.WriteLine($"An error occurred: {e.Message}");
+                }
+            //}
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
         }
     }

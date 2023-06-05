@@ -50,3 +50,16 @@ C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\ne
 C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\net7.0\telegramBot.pdb
 C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\net7.0\telegramBot.genruntimeconfig.cache
 C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\obj\Debug\net7.0\ref\telegramBot.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\AWSSDK.Core.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\AWSSDK.SecurityToken.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\DnsClient.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\MongoDB.Bson.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\MongoDB.Driver.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\MongoDB.Driver.Core.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\MongoDB.Libmongocrypt.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\SharpCompress.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\Snappier.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\ZstdSharp.dll
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\runtimes\linux\native\libmongocrypt.so
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\runtimes\osx\native\libmongocrypt.dylib
+C:\Мой диск\Мои проекты\C#\telegramBot\telegramBot\bin\Debug\net7.0\runtimes\win\native\mongocrypt.dll
