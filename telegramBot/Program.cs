@@ -5,6 +5,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Telegram.Bot.Args;
@@ -41,7 +42,7 @@ namespace telegramBot
                          if (!Regex.IsMatch(message.Text, pattern))
                          {
                              botClient.SendTextMessageAsync(message.Chat,
-                                 "Введите название города на англиском языке");
+                                 "Введите название города на англиском языке с большой буквы\nПример: Minsk");
                              return;
                          }
                          return;
@@ -87,15 +88,35 @@ namespace telegramBot
         public class User
         {
             public ObjectId Id { get; set; }
+            public ulong TelegramId { get; set; }
             public string Name { get; set; }
             public string NickName { get; set; }
             public string Sity { get; set; }
+        }
+
+        public class Information
+        {
+            public string coord { get; set; }
+            public string weather { get; set; }
+            public string visibility { get; set; }
+            public string wind { get; set; }
+            public string clouds { get; set; }
         }
         static void Main(string[] args)
         {
             var client = new MongoClient("mongodb://localhost:27017");
             var database = client.GetDatabase("WeatherUsers");
             var userCollection = database.GetCollection<User>("Users");
+            /*var user = new User
+            {
+                TelegramId = 123456789,
+                Name = "John Doe",
+                NickName = "johndoe",
+                Sity = "New York"
+            };
+
+            User.InsertOne(user);*/
+            
             //var users = (await userCollection.FindAsync(u => u.UserId == telegramUser.Id)).ToList();
             Console.WriteLine("Активизирован бот " + bot.GetMeAsync().Result.FirstName);
 
@@ -194,7 +215,10 @@ namespace telegramBot
                     var response = await httpClient.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     var responseBody = await response.Content.ReadAsStringAsync();
-                    await botClient.SendTextMessageAsync(message.Chat, $"weather {responseBody}");
+                    if (JsonSerializer.Deserialize<JsonDocument>(responseBody) is not { } responseJson) return;
+                    var main = responseJson.RootElement.GetProperty("main");
+                    var degrees = main.GetProperty("temp");
+                    await botClient.SendTextMessageAsync(message.Chat, $"weather {degrees}");
                 }
                 catch (HttpRequestException e)
                 {
