@@ -147,51 +147,14 @@ namespace telegramBot
             );
             if (update.Message.Text=="Посмотреть погоду")
             {
-                //await  botClient.SendTextMessageAsync(message.Chat,
-                  //  "город указан верно");
                 Weather(botClient, update, cancellationToken);
             }
-            /*var inlineKeyboard = new InlineKeyboardMarkup(new[]
-            {
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("Да", "yes")
-                },
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("Нет", "no")
-                }
-            });
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat,
-                text: $"Ваш город: {message.Text}?",
-                replyMarkup: inlineKeyboard
-            );*/
-            
-            /*botClient.OnCallbackQuery += async (object sc, CallbackQueryEventArgs ev) =>
-            {
-                var buttonId = ev.CallbackQuery.Data;
-                await botClient.AnswerCallbackQueryAsync(
-                    callbackQueryId: ev.CallbackQuery.Id,
-                    text: $"Вы нажали кнопку {buttonId}"
-                );
-            };*/
-
         }
         public static async void Weather(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            /*var keyboard = new ReplyKeyboardMarkup(new[]
-            {
-                new[] // row 1
-                {
-                    new KeyboardButton("Узнать погоду")
-                }
-            });
-            if (update.Message.Text=="Узнать погоду")
-            {*/
-                await  botClient.SendTextMessageAsync(message.Chat,
+            await  botClient.SendTextMessageAsync(message.Chat,
                                     "⛅️Погода на сегодня⛅️");
                 var cityTest = "London";
                 var apiKey = "60006c3bff1a26c86b0409860981b5b6";
@@ -210,14 +173,13 @@ namespace telegramBot
                     var min = main.GetProperty("temp_min");
                     var max = main.GetProperty("temp_max");
                     var humidity = main.GetProperty("humidity");
-                    await botClient.SendTextMessageAsync(message.Chat, $"Градусы: {degrees}\nОщущается как: {feel}\nМинимальная температура: {min}\nМаксимальная температура: {max}\nОсадки: {humidity}%");
+                    await botClient.SendTextMessageAsync(message.Chat, $"Градусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
                 }
                 catch (HttpRequestException e)
                 {
                     Console.WriteLine($"An error occurred: {e.Message}");
                 }
-            //}
-            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
+                Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
         }
     }
 }
