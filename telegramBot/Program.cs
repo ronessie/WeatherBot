@@ -4,16 +4,9 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Telegram.Bot.Args;
 using Telegram.Bot.Types;
-using Telegram.Bots.Types;
-using static Telegram.Bot.Types.CallbackQuery;
-using InlineKeyboardMarkup = Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup;
-using Message = Telegram.Bot.Types.Message;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -24,6 +17,7 @@ namespace telegramBot
     class Program
     {
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
+        public static string city;
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
@@ -36,8 +30,9 @@ namespace telegramBot
                     await botClient.SendTextMessageAsync(message.Chat,
                          "Приветик"); 
                          botClient.SendTextMessageAsync(message.Chat,
-                        "Введи свой город на англиском языке что бы узнать погоду.");
+                        "Что бы узнать погоду введите название города на англиском языке с большой буквы.\nПример: Minsk");
                          message = update.Message;
+                         //НЕ РАБОТАЕТ ПРОВЕРКА
                          string pattern = "[a-zA-Z]+";
                          if (!Regex.IsMatch(message.Text, pattern))
                          {
@@ -93,15 +88,6 @@ namespace telegramBot
             public string NickName { get; set; }
             public string Sity { get; set; }
         }
-
-        public class Information
-        {
-            public string coord { get; set; }
-            public string weather { get; set; }
-            public string visibility { get; set; }
-            public string wind { get; set; }
-            public string clouds { get; set; }
-        }
         static void Main(string[] args)
         {
             var client = new MongoClient("mongodb://localhost:27017");
@@ -139,22 +125,23 @@ namespace telegramBot
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}");
+            city = message.Text;
+            //await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}");
             
             var keyboard = new ReplyKeyboardMarkup(new[]
             {
-                new[] // row 1
+                new[]
                 {
                     new KeyboardButton("Посмотреть погоду")
                 },
-                new[] // row 1
-                {
-                new KeyboardButton("Сменить город")
+                new[]
+                { 
+                    new KeyboardButton("Сменить город")
                 }
             });
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
-                text: "Выберите действие",
+                text: "Действие",
                 replyMarkup: keyboard
             );
             if (update.Message.Text=="Посмотреть погоду")
@@ -204,8 +191,8 @@ namespace telegramBot
             if (update.Message.Text=="Узнать погоду")
             {*/
                 await  botClient.SendTextMessageAsync(message.Chat,
-                                    "Погода на сегодня:");
-                var city = "London";
+                                    $"Погода в {city} на сегодня:");
+                //var city = "London";
                 var apiKey = "60006c3bff1a26c86b0409860981b5b6";
                 var url = $"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric";
 
