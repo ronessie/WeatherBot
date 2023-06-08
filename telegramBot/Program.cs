@@ -15,8 +15,7 @@ namespace telegramBot
 {
     class Program
     {
-        static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
-        public static string city;
+        static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI"); 
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
@@ -32,15 +31,26 @@ namespace telegramBot
                          "👋🏻"); 
                          botClient.SendTextMessageAsync(message.Chat,
                         "Что бы узнать погоду введите название города на англиском языке с большой буквы.\nПример: Minsk");
+                         User user = new User()
+                         {
+                             Id = new ObjectId(),
+                             TelegramId = message.Chat.Id,
+                             Name = message.Chat.FirstName,
+                             NickName = message.Chat.Username,
+                             Sity = ""
+                         };
+                         userCollection.InsertOne();
                          message = update.Message;
+                         
                          //НЕ РАБОТАЕТ ПРОВЕРКА
-                         string pattern = "[a-zA-Z]+";
+                         
+                         /*string pattern = "[a-zA-Z]+";
                          if (!Regex.IsMatch(message.Text, pattern))
                          {
                              botClient.SendTextMessageAsync(message.Chat,
                                  "Введите название города на англиском языке с большой буквы\nПример: Minsk");
                              return;
-                         }
+                         }*/
                          return;
                 }
 
@@ -84,7 +94,7 @@ namespace telegramBot
         public class User
         {
             public ObjectId Id { get; set; }
-            public ulong TelegramId { get; set; }
+            public long TelegramId { get; set; }
             public string Name { get; set; }
             public string NickName { get; set; }
             public string Sity { get; set; }
@@ -126,7 +136,6 @@ namespace telegramBot
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            city = message.Text;
             //await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}");
             
             var keyboard = new ReplyKeyboardMarkup(new[]
