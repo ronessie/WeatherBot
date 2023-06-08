@@ -6,7 +6,6 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Telegram.Bot.Types;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -28,7 +27,9 @@ namespace telegramBot
                 if (message.Text.ToLower() == "/start")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
-                         "Приветик"); 
+                         "Приветик");  
+                    await botClient.SendTextMessageAsync(message.Chat,
+                         "👋🏻"); 
                          botClient.SendTextMessageAsync(message.Chat,
                         "Что бы узнать погоду введите название города на англиском языке с большой буквы.\nПример: Minsk");
                          message = update.Message;
@@ -191,10 +192,10 @@ namespace telegramBot
             if (update.Message.Text=="Узнать погоду")
             {*/
                 await  botClient.SendTextMessageAsync(message.Chat,
-                                    $"Погода в {city} на сегодня:");
-                //var city = "London";
+                                    "⛅️Погода на сегодня⛅️");
+                var cityTest = "London";
                 var apiKey = "60006c3bff1a26c86b0409860981b5b6";
-                var url = $"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric";
+                var url = $"http://api.openweathermap.org/data/2.5/weather?q={cityTest}&appid={apiKey}&units=metric";
 
                 using var httpClient = new HttpClient();
                 try
@@ -205,7 +206,11 @@ namespace telegramBot
                     if (JsonSerializer.Deserialize<JsonDocument>(responseBody) is not { } responseJson) return;
                     var main = responseJson.RootElement.GetProperty("main");
                     var degrees = main.GetProperty("temp");
-                    await botClient.SendTextMessageAsync(message.Chat, $"weather {degrees}");
+                    var feel = main.GetProperty("feels_like");
+                    var min = main.GetProperty("temp_min");
+                    var max = main.GetProperty("temp_max");
+                    var humidity = main.GetProperty("humidity");
+                    await botClient.SendTextMessageAsync(message.Chat, $"Градусы: {degrees}\nОщущается как: {feel}\nМинимальная температура: {min}\nМаксимальная температура: {max}\nОсадки: {humidity}%");
                 }
                 catch (HttpRequestException e)
                 {
