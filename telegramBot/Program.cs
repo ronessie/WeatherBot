@@ -18,8 +18,7 @@ namespace telegramBot
         {
             var client = new MongoClient("mongodb://localhost:27017");
             _mongoDatabase = client.GetDatabase("WeatherUsers");
-            var userCollection = _mongoDatabase.GetCollection<User>("Users");
-
+         
             //var users = (await userCollection.FindAsync(u => u.UserId == telegramUser.Id)).ToList();
             Console.WriteLine("Активизирован бот " + bot.GetMeAsync().Result.FirstName);
 
@@ -39,8 +38,8 @@ namespace telegramBot
         }
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
         private static IMongoDatabase _mongoDatabase;
-        
-        
+
+
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
@@ -62,9 +61,17 @@ namespace telegramBot
                              TelegramId = message.Chat.Id,
                              Name = message.Chat.FirstName,
                              NickName = message.Chat.Username,
-                             Sity = ""
+                             City = ""
                          };
-                         //userCollection.InsertOne();
+                         var userCollection = _mongoDatabase.GetCollection<User>("Users");
+                         var filter = Builders<User>.Filter.Eq("TelegramId", message.Chat.Id);
+                         var updateInf = Builders<User>.Update.Combine(
+                             Builders<User>.Update.Set("Name", message.Chat.FirstName),
+                             Builders<User>.Update.Set("NickName", message.Chat.Username),
+                             Builders<User>.Update.Set("City", "")
+                         );
+                         userCollection.UpdateOne(filter, updateInf, new UpdateOptions { IsUpsert = true });
+                         //userCollection.InsertOne(user);
                          message = update.Message;
                          
                          //НЕ РАБОТАЕТ ПРОВЕРКА
@@ -122,7 +129,7 @@ namespace telegramBot
             public long TelegramId { get; set; }
             public string Name { get; set; }
             public string NickName { get; set; }
-            public string Sity { get; set; }
+            public string City { get; set; }
         }
         public static async void YesNoButtons(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
