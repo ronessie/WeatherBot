@@ -5,7 +5,6 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -15,7 +14,33 @@ namespace telegramBot
 {
     class Program
     {
-        static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI"); 
+        public static void Main(string[] args)
+        {
+            var client = new MongoClient("mongodb://localhost:27017");
+            _mongoDatabase = client.GetDatabase("WeatherUsers");
+            var userCollection = _mongoDatabase.GetCollection<User>("Users");
+
+            //var users = (await userCollection.FindAsync(u => u.UserId == telegramUser.Id)).ToList();
+            Console.WriteLine("Активизирован бот " + bot.GetMeAsync().Result.FirstName);
+
+            var cts = new CancellationTokenSource();
+            var cancellationToken = cts.Token;
+            var receiverOptions = new ReceiverOptions
+            {
+                AllowedUpdates = { },
+            };
+            bot.StartReceiving(
+                HandleUpdateAsync,
+                HandleErrorAsync,
+                receiverOptions,
+                cancellationToken
+            );
+            Console.ReadLine();
+        }
+        static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
+        private static IMongoDatabase _mongoDatabase;
+        
+        
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
@@ -39,7 +64,7 @@ namespace telegramBot
                              NickName = message.Chat.Username,
                              Sity = ""
                          };
-                         userCollection.InsertOne();
+                         //userCollection.InsertOne();
                          message = update.Message;
                          
                          //НЕ РАБОТАЕТ ПРОВЕРКА
@@ -99,45 +124,10 @@ namespace telegramBot
             public string NickName { get; set; }
             public string Sity { get; set; }
         }
-        static void Main(string[] args)
-        {
-            var client = new MongoClient("mongodb://localhost:27017");
-            var database = client.GetDatabase("WeatherUsers");
-            var userCollection = database.GetCollection<User>("Users");
-            /*var user = new User
-            {
-                TelegramId = 123456789,
-                Name = "John Doe",
-                NickName = "johndoe",
-                Sity = "New York"
-            };
-
-            User.InsertOne(user);*/
-            
-            //var users = (await userCollection.FindAsync(u => u.UserId == telegramUser.Id)).ToList();
-            Console.WriteLine("Активизирован бот " + bot.GetMeAsync().Result.FirstName);
-
-            var cts = new CancellationTokenSource();
-            var cancellationToken = cts.Token;
-            var receiverOptions = new ReceiverOptions
-            {
-                AllowedUpdates = { },
-            };
-            bot.StartReceiving(
-                HandleUpdateAsync,
-                HandleErrorAsync,
-                receiverOptions,
-                cancellationToken
-            );
-            Console.ReadLine();
-        }
-
         public static async void YesNoButtons(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             var message = update.Message;
-            //await botClient.SendTextMessageAsync(message.Chat, $"Ваш город: {message.Text}");
-            
             var keyboard = new ReplyKeyboardMarkup(new[]
             {
                 new[]
@@ -151,7 +141,7 @@ namespace telegramBot
             });
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
-                text: "Действие",
+                text: "Выберите действие",
                 replyMarkup: keyboard
             );
             if (update.Message.Text=="Посмотреть погоду")
@@ -182,7 +172,7 @@ namespace telegramBot
                     var min = main.GetProperty("temp_min");
                     var max = main.GetProperty("temp_max");
                     var humidity = main.GetProperty("humidity");
-                    await botClient.SendTextMessageAsync(message.Chat, $"Градусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
+                    await botClient.SendTextMessageAsync(message.Chat, $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
                 }
                 catch (HttpRequestException e)
                 {
