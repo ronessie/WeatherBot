@@ -5,6 +5,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Text.Json;
+using Telegram.Bot.Types;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -39,12 +40,11 @@ namespace telegramBot
         static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
         private static IMongoDatabase _mongoDatabase;
 
-
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
-            var message = update.Message;
+            var message = update.Message; 
             if (update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
             {
                 if (message.Text.ToLower() == "/start")
@@ -61,19 +61,21 @@ namespace telegramBot
                              TelegramId = message.Chat.Id,
                              Name = message.Chat.FirstName,
                              NickName = message.Chat.Username,
-                             City = ""
+                             City = "",
+                             Status = ""
                          };
-                         var userCollection = _mongoDatabase.GetCollection<User>("Users");
-                         var filter = Builders<User>.Filter.Eq("TelegramId", message.Chat.Id);
-                         var updateInf = Builders<User>.Update.Combine(
-                             Builders<User>.Update.Set("Name", message.Chat.FirstName),
-                             Builders<User>.Update.Set("NickName", message.Chat.Username),
-                             Builders<User>.Update.Set("City", "")
-                         );
-                         userCollection.UpdateOne(filter, updateInf, new UpdateOptions { IsUpsert = true });
-                         //userCollection.InsertOne(user);
-                         message = update.Message;
+                         var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                          
+                         var updateInf = Builders<User>.Update.Set("Name", message.Chat.FirstName)
+                                 .Set("NickName", message.Chat.Username)
+                                 .Set("City", "")
+                                 .Set("Status", "ChoiseCity");
+
+                         userCollectionAll.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf, new UpdateOptions { IsUpsert = true });
+                         message = update.Message;
+
+
+
                          //НЕ РАБОТАЕТ ПРОВЕРКА
                          
                          /*string pattern = "[a-zA-Z]+";
@@ -85,6 +87,19 @@ namespace telegramBot
                          }*/
                          return;
                 }
+                /*if (status=="ChoiseCity")
+                {
+                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
+                    var statusUpdate = Builders<User>.Update
+                        .Set("City", update.Message.Text)
+                        .Set("Status", "CitySelected");
+                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity", statusUpdate, new UpdateOptions { IsUpsert = true });
+                }*/
+
+                /*await botClient.SendTextMessageAsync(
+                    chatId: update.Message.Chat,
+                    text: "You said:\n" + update.Message.Text
+                );*/
 
                 if (message.Text.ToLower() == "/about")
                 {
@@ -130,6 +145,8 @@ namespace telegramBot
             public string Name { get; set; }
             public string NickName { get; set; }
             public string City { get; set; }
+            
+            public string Status { get; set; }
         }
         public static async void YesNoButtons(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
