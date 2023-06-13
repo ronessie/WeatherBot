@@ -5,6 +5,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Telegram.Bot.Types;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
@@ -62,7 +63,7 @@ namespace telegramBot
                              Name = message.Chat.FirstName,
                              NickName = message.Chat.Username,
                              City = "",
-                             Status = ""
+                             Status = "start"
                          };
                          var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                          
@@ -73,33 +74,26 @@ namespace telegramBot
 
                          userCollectionAll.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf, new UpdateOptions { IsUpsert = true });
                          message = update.Message;
-
-
-
-                         //НЕ РАБОТАЕТ ПРОВЕРКА
-                         
-                         /*string pattern = "[a-zA-Z]+";
-                         if (!Regex.IsMatch(message.Text, pattern))
-                         {
-                             botClient.SendTextMessageAsync(message.Chat,
-                                 "Введите название города на англиском языке с большой буквы\nПример: Minsk");
-                             return;
-                         }*/
                          return;
                 }
-                /*if (status=="ChoiseCity")
-                {
-                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
-                    var statusUpdate = Builders<User>.Update
-                        .Set("City", update.Message.Text)
-                        .Set("Status", "CitySelected");
-                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity", statusUpdate, new UpdateOptions { IsUpsert = true });
-                }*/
+                var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
+                var user2 = (await userCollectionCitys.Find(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity").FirstOrDefaultAsync());
 
-                /*await botClient.SendTextMessageAsync(
-                    chatId: update.Message.Chat,
-                    text: "You said:\n" + update.Message.Text
-                );*/
+                string pattern = "[a-zA-Z]+";
+                if (user2 is not null && user2.Status=="ChoiseCity" && Regex.IsMatch(message.Text, pattern))
+                {
+                    var statusUpdate = Builders<User>.Update
+                        .Set(f => f.City, update.Message.Text)
+                        .Set(f => f.Status, "CitySelected");
+                    
+                    userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity", statusUpdate, new UpdateOptions { IsUpsert = true });
+                }
+                else if(user2 is not null && user2.Status=="ChoiseCity" && !Regex.IsMatch(message.Text, pattern))
+                {
+                    botClient.SendTextMessageAsync(message.Chat, 
+                        "Введите название города на англиском языке с большой буквы\nПример: Minsk");
+                    return;
+                }
 
                 if (message.Text.ToLower() == "/about")
                 {
@@ -128,10 +122,9 @@ namespace telegramBot
                     text: " "
                 );
                 YesNoButtons(botClient, update, cancellationToken);
-                
             }
         }
-
+        
         public static async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception,
             CancellationToken cancellationToken)
         {
@@ -172,14 +165,42 @@ namespace telegramBot
             {
                 Weather(botClient, update, cancellationToken);
             }
+            if (update.Message.Text=="Сменить город")
+            {
+                var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
+                         
+                var updateInf = Builders<User>.Update
+                    .Set("City", "")
+                    .Set("Status", "ChoiseCity");
+
+                userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf, new UpdateOptions { IsUpsert = true });
+                
+                var user2 = (await userCollectionCity.Find(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity").FirstOrDefaultAsync());
+                if (update.Message.Text=="Сменить город" && update.Message.Text=="Выберите действие")
+                {
+                    if (user2 is not null && user2.Status=="ChoiseCity")
+                    { 
+                        var statusUpdate = Builders<User>.Update
+                            .Set(f => f.City, update.Message.Text)
+                            .Set(f => f.Status, "CitySelected");
+                        userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity", statusUpdate, new UpdateOptions { IsUpsert = true });
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
         }
         public static async void Weather(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
             var message = update.Message;
             await  botClient.SendTextMessageAsync(message.Chat,
-                                    "⛅️Погода на сегодня⛅️");
-                var cityTest = "London";
+                                    "⛅️Погода на сегодня⛅️"); 
+            var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
+            var user = (await userCollectionCitys.Find(u => u.TelegramId == message.Chat.Id && u.City!="").FirstOrDefaultAsync());
+            var cityTest = user.City;
                 var apiKey = "60006c3bff1a26c86b0409860981b5b6";
                 var url = $"http://api.openweathermap.org/data/2.5/weather?q={cityTest}&appid={apiKey}&units=metric";
 
@@ -197,6 +218,36 @@ namespace telegramBot
                     var max = main.GetProperty("temp_max");
                     var humidity = main.GetProperty("humidity");
                     await botClient.SendTextMessageAsync(message.Chat, $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
+                    string tgmessage = "";
+                    if (humidity.GetInt32() >= 70)
+                    {
+                        tgmessage+="☂️Возможны осадки, возьми с собой зонтик☂️\n";
+                    }
+
+                    if (degrees.GetDouble()-feel.GetDouble()>5)
+                    {
+                        tgmessage+="💨Ветренно, одевайтесь теплее💨\n";
+                    }
+                    
+                    if (feel.GetDouble()-degrees.GetDouble()>5)
+                    {
+                        tgmessage+="☀️Жарко, не забудь кепку☀️\n";
+                    }
+
+                    if (degrees.GetDouble()<15 && degrees.GetDouble()>10)
+                    {
+                        tgmessage+="🧥Прохладно, возьми куртку🧥\n";
+                    }
+
+                    if (degrees.GetDouble()<-15)
+                    {
+                        tgmessage+="🧣Холодно, не забудь шарфик🧣\n";
+                    }
+
+                    if (tgmessage!="")
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat, tgmessage);
+                    }
                 }
                 catch (HttpRequestException e)
                 {
