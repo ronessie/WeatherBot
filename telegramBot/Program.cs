@@ -1,4 +1,6 @@
-﻿using MongoDB.Bson;
+﻿using System;
+using System.Net.Http;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -6,6 +8,9 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using telegramBot.Config;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
 
@@ -15,10 +20,28 @@ namespace telegramBot
 {
     class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var client = new MongoClient("mongodb://localhost:27017");
-            _mongoDatabase = client.GetDatabase("WeatherUsers");
+            MongoClient Client;
+            MongoClientSettings Settings;
+            var config = new Config<MainConfig>().Entries;
+
+#if !DEBUG
+            Settings = new()
+            {
+                Server = new MongoServerAddress(config.Host, config.Port),
+                Credential = MongoCredential.CreateCredential(config.DbName,
+                    config.AuthorizationName, config.AuthorizationPassword)
+            };
+            Client = new(Settings);
+            _mongoDatabase = Client.GetDatabase("WeatherUsers");
+#endif
+         
+#if DEBUG
+            Client = new("mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false");
+            _mongoDatabase = Client.GetDatabase("WeatherUsers");
+#endif
+
             Console.WriteLine("Активизирован бот " + bot.GetMeAsync().Result.FirstName);
 
             var cts = new CancellationTokenSource();
@@ -33,9 +56,11 @@ namespace telegramBot
                 receiverOptions,
                 cancellationToken
             );
-            Console.ReadLine();
+
+
+            await Task.Delay(-1);
         }
-        static ITelegramBotClient bot = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
+        static ITelegramBotClient bot = new TelegramBotClient(new Config<MainConfig>().Entries.Token);
         private static IMongoDatabase _mongoDatabase;
 
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
@@ -43,7 +68,7 @@ namespace telegramBot
         {
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var message = update.Message; 
-            if (update.Type == Telegram.Bot.Types.Enums.UpdateType.Message)
+            if (update.Type == UpdateType.Message)
             {
                 if (message.Text.ToLower() == "/start")
                 {
@@ -169,7 +194,7 @@ namespace telegramBot
             var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
             var user = (await userCollectionCitys.Find(u => u.TelegramId == message.Chat.Id && u.City!="").FirstOrDefaultAsync());
             var cityTest = user.City;
-                var apiKey = "60006c3bff1a26c86b0409860981b5b6";
+                var apiKey = new Config<MainConfig>().Entries.ApiToken;
                 var url = $"http://api.openweathermap.org/data/2.5/weather?q={cityTest}&appid={apiKey}&units=metric";
 
                 using var httpClient = new HttpClient();
