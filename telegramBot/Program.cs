@@ -77,16 +77,8 @@ namespace telegramBot
                     await botClient.SendTextMessageAsync(message.Chat,
                          "👋🏻"); 
                          botClient.SendTextMessageAsync(message.Chat,
-                        "Что бы узнать погоду введите название города на англиском языке.\nПример: Minsk");
-                         User user = new User()
-                         {
-                             Id = new ObjectId(),
-                             TelegramId = message.Chat.Id,
-                             Name = message.Chat.FirstName,
-                             NickName = message.Chat.Username,
-                             City = "",
-                             Status = "start"
-                         };
+                        "Что бы узнать погоду, введите название города на англиском языке.\nПример: Minsk");
+                         
                          var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                          
                          var updateInf = Builders<User>.Update.Set("Name", message.Chat.FirstName)
@@ -230,7 +222,7 @@ namespace telegramBot
                         tgmessage+="💨Ветренно, одевайтесь теплее💨\n";
                     }
                     
-                    if (feel.GetDouble()-degrees.GetDouble()>5)
+                    if (feel.GetDouble()-degrees.GetDouble()>5 || degrees.GetDouble()>27)
                     {
                         tgmessage+="☀️Жарко, не забудь кепку☀️\n";
                     }
