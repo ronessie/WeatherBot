@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3.0.3
+        with:
+          dotnet-version: 7.0.100-preview.7.22377.5
+      - name: Build
+        run: dotnet publish telegramBot -c Release -r ubuntu.22.04-x64 -p:PublishSingleFile=true --self-contained true --output telegramBot/Artifacts/build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: telegramBot/Artifacts/build
+  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        name: Download build artifacts
+        with:
+          name: build
+          path: telegramBot/Artifacts/build
+
+      - uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+
+      - name: Archive files
+        run: |
+          cd telegramBot/Artifacts
+          zip -r build.zip *
+
+      - name: Publish artifacts to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: telegramBot/Artifacts/build.zip
+          asset_name: build.zip
+          asset_content_type: application/zip
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+      - name: Adding Known Hosts
+        run: ssh-keyscan -p 41061 -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Copy artifacts
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 41061
+          source: "telegramBot/Artifacts/build/*"
+          strip_components: 3
+          target: "/home/veronika/"
+      - name: Set up files in host
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: 41061
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: "cd /home/veronika && chmod +x telegramBot && systemctl kill veronika"
+  
+      
+  remove-old-artifacts:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Remove old artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '1 day'
+          skip-recent: 1
