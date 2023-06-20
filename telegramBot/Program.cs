@@ -77,7 +77,7 @@ namespace telegramBot
                     await botClient.SendTextMessageAsync(message.Chat,
                          "👋🏻"); 
                          botClient.SendTextMessageAsync(message.Chat,
-                        "Что бы узнать погоду, введите название города на англиском языке.\nПример: Minsk");
+                        "Что бы узнать погоду, введите название города на английском языке.\nПример: Minsk");
                          
                          var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                          
@@ -94,19 +94,14 @@ namespace telegramBot
                 var user2 = (await userCollectionCitys.Find(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity").FirstOrDefaultAsync());
 
                 string pattern = "[a-zA-Z]+";
-                if (user2 is not null && user2.Status=="ChoiseCity" && Regex.IsMatch(message.Text, pattern))
+                if (user2 is not null && user2.Status == "ChoiseCity" && Regex.IsMatch(message.Text, pattern))
                 {
                     var statusUpdate = Builders<User>.Update
                         .Set(f => f.City, update.Message.Text)
                         .Set(f => f.Status, "CitySelected");
-                    
-                    userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status=="ChoiseCity", statusUpdate, new UpdateOptions { IsUpsert = true });
-                }
-                else if(user2 is not null && user2.Status=="ChoiseCity" && !Regex.IsMatch(message.Text, pattern))
-                {
-                    botClient.SendTextMessageAsync(message.Chat, 
-                        "Введите название города на англиском языке\nПример: Minsk");
-                    return;
+
+                    userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity",
+                        statusUpdate, new UpdateOptions { IsUpsert = true });
                 }
 
                 if (message.Text.ToLower() == "/about")
@@ -159,11 +154,11 @@ namespace telegramBot
                     new KeyboardButton("Сменить город")
                 }
             });
-            await botClient.SendTextMessageAsync(
+            /*await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
                 text: "Выберите действие",
                 replyMarkup: keyboard
-            );
+            );*/
             if (update.Message.Text=="Посмотреть погоду")
             {
                 Weather(botClient, update, cancellationToken);
@@ -177,6 +172,9 @@ namespace telegramBot
                     .Set("Status", "ChoiseCity");
 
                 userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf, new UpdateOptions { IsUpsert = true });
+                
+                botClient.SendTextMessageAsync(message.Chat, 
+                    "Введите название города на английском языке\nПример: Minsk");
             }
         }
         public static async void Weather(ITelegramBotClient botClient, Update update,
