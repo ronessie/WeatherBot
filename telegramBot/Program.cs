@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 using telegramBot.Config;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
@@ -68,6 +69,7 @@ namespace telegramBot
         {
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var message = update.Message; 
+            Spam(botClient, update, cancellationToken);
             if (update.Type == UpdateType.Message)
             {
                 if (message.Text.ToLower() == "/start")
@@ -85,7 +87,6 @@ namespace telegramBot
                                  .Set("NickName", message.Chat.Username)
                                  .Set("City", "")
                                  .Set("Status", "ChoiseCity");
-
                          userCollectionAll.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf, new UpdateOptions { IsUpsert = true });
                          message = update.Message;
                          return;
@@ -102,18 +103,15 @@ namespace telegramBot
 
                     userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity",
                         statusUpdate, new UpdateOptions { IsUpsert = true });
+                    
+                    await botClient.SendTextMessageAsync(message.Chat,
+                        "Город выбран успешно");
                 }
 
                 if (message.Text.ToLower() == "/about")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
-                        "Бот погода станет верным помощником для Вас и будет каждый день уведомлять о погоде за окном.");
-                    return;
-                }
-
-                if (message.Text.ToLower() == "/help")
-                {
-                    await botClient.SendTextMessageAsync(message.Chat, "Help");
+                        "Бот погода станет верным помощником для Вас и будет каждый день уведомлять о погоде за окном. Все данные взяты с сайта OpenWeather, за достоверность данных автор ответственности не несёт.");
                     return;
                 }
 
@@ -154,11 +152,11 @@ namespace telegramBot
                     new KeyboardButton("Сменить город")
                 }
             });
-            /*await botClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: message.Chat,
                 text: "Выберите действие",
                 replyMarkup: keyboard
-            );*/
+            );
             if (update.Message.Text=="Посмотреть погоду")
             {
                 Weather(botClient, update, cancellationToken);
@@ -246,6 +244,17 @@ namespace telegramBot
                     await botClient.SendTextMessageAsync(message.Chat, "Такого города нет в системе, проверьте пожалуйста правильность написания и смените город ещё раз.");
                 }
                 Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
+        }
+
+        public static async void Spam(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        {
+            var message = update.Message;
+            var userCollection = _mongoDatabase.GetCollection<User>("Users");
+            var user = (await userCollection.Find(u => u.TelegramId == message.Chat.Id).FirstOrDefaultAsync());
+            if (DateTime.Now.ToString("HH:mm")=="15:58" && user is not null && user.Status=="CitySelected")
+            {
+                Weather(botClient, update, cancellationToken);
+            }
         }
     }
 }
