@@ -23,6 +23,20 @@ namespace telegramBot
     {
         public static async Task Main(string[] args)
         {
+            /*var update = new Update();
+            var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
+            var cancelToken = new CancellationToken();
+            DateTime now = DateTime.Now;
+
+            DateTime nextExecutionTime = new DateTime(now.Year, now.Month, now.Day, 7, 0, 0);
+            if (now > nextExecutionTime)
+            {
+                nextExecutionTime = nextExecutionTime.AddDays(1);
+            }
+            TimeSpan timeUntilNextExecution = nextExecutionTime - now;
+            Timer timer = new Timer(new TimerCallback((object state) => Spam(botClient, update, cancelToken)), null, timeUntilNextExecution, TimeSpan.FromDays(1));
+            timer.Dispose();*/
+            
             MongoClient Client;
             MongoClientSettings Settings;
             var config = new Config<MainConfig>().Entries;
@@ -69,9 +83,45 @@ namespace telegramBot
         {
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var message = update.Message; 
-            Spam(botClient, update, cancellationToken);
             if (update.Type == UpdateType.Message)
             {
+                if (message.Text.ToLower() == "/spam" && message.Chat.Id == 975333201)
+                {
+                    //функция рассылки от моего лица
+                    var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
+                    var updateInf = Builders<User>.Update.Set("Spam", "MessageWrite");
+                    await botClient.SendTextMessageAsync(message.Chat,
+                        "Введите текст для рассылки");
+                    userCollectionAll.UpdateOne(u => u.TelegramId == 975333201, updateInf, new UpdateOptions { IsUpsert = true });
+                    message = update.Message;
+                    return;
+                }
+
+                string messageSpam = "Рассылка: ";
+                var userCollectionSpam = _mongoDatabase.GetCollection<User>("Users");
+                var user = (await userCollectionSpam.Find(u => u.TelegramId == 975333201 && u.Spam=="MessageWrite").FirstOrDefaultAsync());
+                if (user is not null && user.Spam == "MessageWrite")
+                {
+                    messageSpam += update.Message.Text;
+                    var spamUpdate = Builders<User>.Update
+                        .Set(f => f.Spam, "MessageReady");
+
+                    userCollectionSpam.UpdateOne(u => u.TelegramId == 975333201 && u.Spam=="MessageWrite",
+                        spamUpdate, new UpdateOptions { IsUpsert = true });
+                    
+                    var collection = _mongoDatabase.GetCollection<User>("Users");
+                    var userList = await collection.Find(u=>true).ToListAsync();
+
+                    for (int i = 0; i < userList.Count; i++)
+                    {
+                        //надо message.Chat поменять на что-то типо user.Chat что бы он отправлял рассылку не только мне
+                        await botClient.SendTextMessageAsync(userList[i],
+                            messageSpam);
+                    }
+                    
+                    await botClient.SendTextMessageAsync(message.Chat,
+                        "Рассылка успешно создана\n"+messageSpam);
+                }
                 if (message.Text.ToLower() == "/start")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
@@ -82,11 +132,11 @@ namespace telegramBot
                         "Что бы узнать погоду, введите название города на английском языке.\nПример: Minsk");
                          
                          var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
-                         
+
                          var updateInf = Builders<User>.Update.Set("Name", message.Chat.FirstName)
-                                 .Set("NickName", message.Chat.Username)
-                                 .Set("City", "")
-                                 .Set("Status", "ChoiseCity");
+                             .Set("NickName", message.Chat.Username)
+                             .Set("City", "")
+                             .Set("Status", "ChoiseCity");
                          userCollectionAll.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf, new UpdateOptions { IsUpsert = true });
                          message = update.Message;
                          return;
@@ -200,8 +250,16 @@ namespace telegramBot
                     var humidity = main.GetProperty("humidity");
                     await  botClient.SendTextMessageAsync(message.Chat,
                         "⛅️Погода на сегодня⛅️");
-                    await botClient.SendTextMessageAsync(message.Chat,
-                        $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
+                    if (min.ToString()==max.ToString())
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat,
+                            $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nОсадки: {humidity}%");
+                    }
+                    else
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat,
+                            $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
+                    }
                     string tgmessage = "";
                     if (degrees.ToString() == "")
                     {
@@ -251,7 +309,7 @@ namespace telegramBot
             var message = update.Message;
             var userCollection = _mongoDatabase.GetCollection<User>("Users");
             var user = (await userCollection.Find(u => u.TelegramId == message.Chat.Id).FirstOrDefaultAsync());
-            if (DateTime.Now.ToString("HH:mm")=="15:58" && user is not null && user.Status=="CitySelected")
+            if (user is not null && user.Status=="CitySelected")
             {
                 Weather(botClient, update, cancellationToken);
             }
