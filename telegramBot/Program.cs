@@ -114,8 +114,7 @@ namespace telegramBot
 
                     for (int i = 0; i < userList.Count; i++)
                     {
-                        //надо message.Chat поменять на что-то типо user.Chat что бы он отправлял рассылку не только мне
-                        await botClient.SendTextMessageAsync(userList[i],
+                        await botClient.SendTextMessageAsync(userList[i].TelegramId,
                             messageSpam);
                     }
                     
