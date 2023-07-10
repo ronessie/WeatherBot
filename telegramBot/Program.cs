@@ -97,7 +97,7 @@ namespace telegramBot
                     return;
                 }
 
-                string messageSpam = "Рассылка: ";
+                string messageSpam = "📬Рассылка📬\n";
                 var userCollectionSpam = _mongoDatabase.GetCollection<User>("Users");
                 var user = (await userCollectionSpam.Find(u => u.TelegramId == 975333201 && u.Spam=="MessageWrite").FirstOrDefaultAsync());
                 if (user is not null && user.Spam == "MessageWrite")
@@ -116,10 +116,9 @@ namespace telegramBot
                     {
                         await botClient.SendTextMessageAsync(userList[i].TelegramId,
                             messageSpam);
+                        await botClient.SendTextMessageAsync(message.Chat,
+                            "Рассылка успешно создана\n");
                     }
-                    
-                    await botClient.SendTextMessageAsync(message.Chat,
-                        "Рассылка успешно создана\n"+messageSpam);
                 }
                 if (message.Text.ToLower() == "/start")
                 {
