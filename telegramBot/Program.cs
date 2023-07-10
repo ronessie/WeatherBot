@@ -85,7 +85,7 @@ namespace telegramBot
             var botClient = new TelegramBotClient("5991659123:AAHSfX4vBRKa6abDFzPFXScmyTBN7yOBQog");
             var cancelToken = new CancellationToken();
             DateTime currentTime = DateTime.Now;
-            if (currentTime.Hour == 15 && currentTime.Minute == 58)
+            if (currentTime.Hour == 7 && currentTime.Minute == 00)
             {
                 Spam(botClient, update, cancelToken);
             }
