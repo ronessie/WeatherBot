@@ -134,9 +134,9 @@ namespace telegramBot
                     {
                         await botClient.SendTextMessageAsync(userList[i].TelegramId,
                             messageSpam);
-                        await botClient.SendTextMessageAsync(message.Chat,
-                            "Рассылка успешно создана\n");
                     }
+                    await botClient.SendTextMessageAsync(message.Chat,
+                        "Рассылка успешно создана\n");
                 }
 
                 if (message.Text.ToLower() == "/start")
@@ -216,11 +216,11 @@ namespace telegramBot
             {
                 new[]
                 {
-                    new KeyboardButton("Посмотреть погоду")
+                    new KeyboardButton("⛅️Посмотреть погоду⛅️")
                 },
                 new[]
                 {
-                    new KeyboardButton("Сменить город")
+                    new KeyboardButton("🏠Сменить город🏠")
                 }
             });
             await botClient.SendTextMessageAsync(
@@ -228,12 +228,12 @@ namespace telegramBot
                 text: "Выберите действие",
                 replyMarkup: keyboard
             );
-            if (update.Message.Text == "Посмотреть погоду")
+            if (update.Message.Text == "⛅️Посмотреть погоду⛅️")
             {
                 Weather(botClient, update, cancellationToken);
             }
 
-            if (update.Message.Text == "Сменить город")
+            if (update.Message.Text == "🏠Сменить город🏠")
             {
                 var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
 
