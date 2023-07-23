@@ -19,20 +19,6 @@ namespace telegramBot
     {
         public static async Task Main(string[] args)
         {
-            /*var update = new Update();
-            var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");
-            var cancelToken = new CancellationToken();
-            DateTime now = DateTime.Now;
-
-            DateTime nextExecutionTime = new DateTime(now.Year, now.Month, now.Day, 7, 0, 0);
-            if (now > nextExecutionTime)
-            {
-                nextExecutionTime = nextExecutionTime.AddDays(1);
-            }
-            TimeSpan timeUntilNextExecution = nextExecutionTime - now;
-            Timer timer = new Timer(new TimerCallback((object state) => Spam(botClient, update, cancelToken)), null, timeUntilNextExecution, TimeSpan.FromDays(1));
-            timer.Dispose();*/
-
             Timer timer = new Timer(60000);
             timer.Elapsed += TimerElapsed;
             timer.Start();
@@ -103,7 +89,6 @@ namespace telegramBot
             {
                 if (message.Text.ToLower() == "/spam" && message.Chat.Id == 975333201)
                 {
-                    //функция рассылки от моего лица
                     var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                     var updateInf = Builders<User>.Update.Set("Spam", "MessageWrite");
                     await botClient.SendTextMessageAsync(message.Chat,
@@ -340,7 +325,6 @@ namespace telegramBot
 
             for (int i = 0; i < userList.Count; i++)
             {
-                var message = update.Message;
                 var userCollection = _mongoDatabase.GetCollection<User>("Users");
                 var user = (await userCollection.Find(u => true).FirstOrDefaultAsync());
                 var cityTest = user.City;
