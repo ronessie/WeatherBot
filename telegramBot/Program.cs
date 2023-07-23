@@ -67,8 +67,8 @@ namespace telegramBot
         static void TimerElapsed(object sender, ElapsedEventArgs e)
         {
             var update = new Update();
-            //var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");   //ТЕСТОВЫЙ ТОКЕН
-            var botClient = new TelegramBotClient("5991659123:AAHSfX4vBRKa6abDFzPFXScmyTBN7yOBQog");
+            var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");   //ТЕСТОВЫЙ ТОКЕН
+            //var botClient = new TelegramBotClient("5991659123:AAHSfX4vBRKa6abDFzPFXScmyTBN7yOBQog");
             DateTime currentTime = DateTime.Now;
             if (currentTime.Hour == 10 && currentTime.Minute == 00)
             {
@@ -182,7 +182,7 @@ namespace telegramBot
                     chatId: message.Chat.Id,
                     text: " "
                 );
-                YesNoButtons(botClient, update, cancellationToken);
+                YesNoButtons(botClient, update);
             }
         }
 
@@ -192,30 +192,59 @@ namespace telegramBot
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
 
-        public static async void YesNoButtons(ITelegramBotClient botClient, Update update,
-            CancellationToken cancellationToken)
+        public static async void YesNoButtons(ITelegramBotClient botClient, Update update)
         {
             var message = update.Message;
-            var keyboard = new ReplyKeyboardMarkup(new[]
+            var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
+            var user = (await userCollectionCitys.Find(u => u.TelegramId == message.Chat.Id && u.City != "")
+                .FirstOrDefaultAsync());
+            if (user.Status=="NoSpam")
             {
-                new[]
+                var keyboard = new ReplyKeyboardMarkup(new[]
                 {
-                    new KeyboardButton("⛅️Посмотреть погоду⛅️")
-                },
-                new[]
+                    new[]
+                    {
+                        new KeyboardButton("⛅️Посмотреть погоду⛅️")
+                    },
+                    new[]
+                    {
+                        new KeyboardButton("🏠Сменить город🏠")
+                    },
+                    new[]
+                    {
+                        new KeyboardButton("🚪Подписаться на рассылку🚪")
+                    }
+                });
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat,
+                    text: "Выберите действие",
+                    replyMarkup: keyboard
+                );
+            }
+            else
+            {
+                var keyboard = new ReplyKeyboardMarkup(new[]
                 {
-                    new KeyboardButton("🏠Сменить город🏠")
-                },
-                new[]
-                {
-                    new KeyboardButton("🚪Отказаться от рассылки🚪")
-                }
-            });
-            await botClient.SendTextMessageAsync(
-                chatId: message.Chat,
-                text: "Выберите действие",
-                replyMarkup: keyboard
-            );
+                    new[]
+                    {
+                        new KeyboardButton("⛅️Посмотреть погоду⛅️")
+                    },
+                    new[]
+                    {
+                        new KeyboardButton("🏠Сменить город🏠")
+                    },
+                    new[]
+                    {
+                        new KeyboardButton("🚪Отказаться от рассылки🚪")
+                    }
+                });
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat,
+                    text: "Выберите действие",
+                    replyMarkup: keyboard
+                );
+            }
+            
             if (update.Message.Text == "⛅️Посмотреть погоду⛅️")
             {
                 Weather(botClient, update);
@@ -231,6 +260,18 @@ namespace telegramBot
 
                 botClient.SendTextMessageAsync(message.Chat,
                     "Вы успешно отписались от рассылки");
+            }
+            if (update.Message.Text == "🚪Подписаться на рассылку🚪")
+            {
+                var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
+
+                var updateInf = Builders<User>.Update.Set("Status", "CitySelected");
+
+                userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    new UpdateOptions { IsUpsert = true });
+
+                botClient.SendTextMessageAsync(message.Chat,
+                    "Вы успешно подписались на рассылку");
             }
 
             if (update.Message.Text == "🏠Сменить город🏠")
