@@ -69,11 +69,10 @@ namespace telegramBot
             var update = new Update();
             //var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");   //ТЕСТОВЫЙ ТОКЕН
             var botClient = new TelegramBotClient("5991659123:AAHSfX4vBRKa6abDFzPFXScmyTBN7yOBQog");
-            var cancelToken = new CancellationToken();
             DateTime currentTime = DateTime.Now;
             if (currentTime.Hour == 10 && currentTime.Minute == 00)
             {
-                Spam(botClient, update, cancelToken);
+                Spam(botClient, update);
             }
         }
 
@@ -92,7 +91,7 @@ namespace telegramBot
                     var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                     var updateInf = Builders<User>.Update.Set("Spam", "MessageWrite");
                     await botClient.SendTextMessageAsync(message.Chat,
-                        "Введите текст для рассылки");
+                        "Введите текст рассылки");
                     userCollectionAll.UpdateOne(u => u.TelegramId == 975333201, updateInf,
                         new UpdateOptions { IsUpsert = true });
                     message = update.Message;
@@ -166,7 +165,7 @@ namespace telegramBot
                 if (message.Text.ToLower() == "/about")
                 {
                     await botClient.SendTextMessageAsync(message.Chat,
-                        "Бот погода станет верным помощником для Вас и будет каждый день уведомлять о погоде за окном. Все данные взяты с сайта OpenWeather, за достоверность данных автор ответственности не несёт.");
+                        "Бот погода станет верным помощником для Вас и будет каждый день уведомлять о погоде за окном. Все данные взяты с сайта OpenWeather, за достоверность информации автор ответственности не несёт.");
                     return;
                 }
 
@@ -206,6 +205,10 @@ namespace telegramBot
                 new[]
                 {
                     new KeyboardButton("🏠Сменить город🏠")
+                },
+                new[]
+                {
+                    new KeyboardButton("🚪Отказаться от рассылки🚪")
                 }
             });
             await botClient.SendTextMessageAsync(
@@ -215,7 +218,19 @@ namespace telegramBot
             );
             if (update.Message.Text == "⛅️Посмотреть погоду⛅️")
             {
-                Weather(botClient, update, cancellationToken);
+                Weather(botClient, update);
+            }
+            if (update.Message.Text == "🚪Отказаться от рассылки🚪")
+            {
+                var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
+
+                var updateInf = Builders<User>.Update.Set("Status", "NoSpam");
+
+                userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    new UpdateOptions { IsUpsert = true });
+
+                botClient.SendTextMessageAsync(message.Chat,
+                    "Вы успешно отписались от рассылки");
             }
 
             if (update.Message.Text == "🏠Сменить город🏠")
@@ -234,8 +249,7 @@ namespace telegramBot
             }
         }
 
-        public static async void Weather(ITelegramBotClient botClient, Update update,
-            CancellationToken cancellationToken)
+        public static async void Weather(ITelegramBotClient botClient, Update update)
         {
             var message = update.Message;
             var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
@@ -318,11 +332,11 @@ namespace telegramBot
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
         }
 
-        public static async void Spam(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public static async void Spam(ITelegramBotClient botClient, Update update)
         {
             var collection = _mongoDatabase.GetCollection<User>("Users");
-            var userList = await collection.Find(u => true).ToListAsync();
-
+            var userList = await collection.Find(u => true && u.Status != "NoSpam").ToListAsync();
+            
             for (int i = 0; i < userList.Count; i++)
             {
                 var userCollection = _mongoDatabase.GetCollection<User>("Users");
