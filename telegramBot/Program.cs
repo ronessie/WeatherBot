@@ -339,7 +339,7 @@ namespace telegramBot
 
                 if (degrees.GetDouble() - feel.GetDouble() > 5)
                 {
-                    tgmessage += "💨Ветренно, одевайтесь теплее💨\n";
+                    tgmessage += "💨Ветренно, одевайся теплее💨\n";
                 }
 
                 if (feel.GetDouble() - degrees.GetDouble() > 5 || degrees.GetDouble() > 27)
@@ -428,7 +428,7 @@ namespace telegramBot
 
                         if (degrees.GetDouble() - feel.GetDouble() > 5)
                         {
-                            tgmessage += "💨Ветренно, одевайтесь теплее💨\n";
+                            tgmessage += "💨Ветренно, одевайся теплее💨\n";
                         }
 
                         if (feel.GetDouble() - degrees.GetDouble() > 5 || degrees.GetDouble() > 27)
