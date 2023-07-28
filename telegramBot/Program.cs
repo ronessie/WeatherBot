@@ -154,11 +154,107 @@ namespace telegramBot
                         .Set(f => f.City, update.Message.Text)
                         .Set(f => f.Status, "CitySelected");
 
-                    userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity",
+                    userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity", 
                         statusUpdate, new UpdateOptions { IsUpsert = true });
+                    message = update.Message;
+                    var keyboard = new ReplyKeyboardMarkup(new[]
+                {
+                    new[]
+                    {
+                        new KeyboardButton("⛅️Посмотреть погоду⛅️")
+                    },
+                    new[]
+                    {
+                        new KeyboardButton("🏠Сменить город🏠")
+                    },
+                    new[]
+                    {
+                        new KeyboardButton("🚪Отказаться от рассылки🚪")
+                    }
+                });
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat,
+                    text: "Город успешно установлен. Выберите действие.",
+                    replyMarkup: keyboard
+                );
+                }
+                if (update.Message.Text == "⛅️Посмотреть погоду⛅️")
+                {
+                    Weather(botClient, update);
+                }
+                if (update.Message.Text == "🚪Отказаться от рассылки🚪")
+                {
+                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
 
-                    await botClient.SendTextMessageAsync(message.Chat,
-                        "Город выбран успешно");
+                    var updateInf = Builders<User>.Update.Set("Status", "NoSpam");
+
+                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                        new UpdateOptions { IsUpsert = true });
+
+                    var keyboard = new ReplyKeyboardMarkup(new[]
+                        {
+                            new[]
+                            {
+                                new KeyboardButton("⛅️Посмотреть погоду⛅️")
+                            },
+                            new[]
+                            {
+                                new KeyboardButton("🏠Сменить город🏠")
+                            },
+                            new[]
+                            {
+                                new KeyboardButton("🚪Подписаться на рассылку🚪")
+                            }
+                        });
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat,
+                        text: "Вы успешно отписались от рассылки. Выберите действие.",
+                        replyMarkup: keyboard
+                    );
+                }
+                if (update.Message.Text == "🚪Подписаться на рассылку🚪")
+                {
+                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
+
+                    var updateInf = Builders<User>.Update.Set("Status", "CitySelected");
+
+                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                        new UpdateOptions { IsUpsert = true });
+                    var keyboard = new ReplyKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            new KeyboardButton("⛅️Посмотреть погоду⛅️")
+                        },
+                        new[]
+                        {
+                            new KeyboardButton("🏠Сменить город🏠")
+                        },
+                        new[]
+                        {
+                            new KeyboardButton("🚪Отказаться от рассылки🚪")
+                        }
+                    });
+                    await botClient.SendTextMessageAsync(
+                        chatId: message.Chat,
+                        text: "Вы успешно подписались на рассылку. Выберите действие.",
+                        replyMarkup: keyboard
+                    );
+                }
+
+                if (update.Message.Text == "🏠Сменить город🏠")
+                {
+                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
+
+                    var updateInf = Builders<User>.Update
+                        .Set("City", "")
+                        .Set("Status", "ChoiseCity");
+
+                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                        new UpdateOptions { IsUpsert = true });
+
+                    botClient.SendTextMessageAsync(message.Chat,
+                        "Введите название города на английском языке\nПример: Minsk");
                 }
 
                 if (message.Text.ToLower() == "/about")
@@ -181,7 +277,6 @@ namespace telegramBot
                     chatId: message.Chat.Id,
                     text: " "
                 );
-                Buttons(botClient, update);
             }
         }
 
@@ -191,103 +286,6 @@ namespace telegramBot
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
         }
 
-        public static async void Buttons(ITelegramBotClient botClient, Update update)
-        {
-            var message = update.Message;
-            var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
-            var user = (await userCollectionCitys.Find(u => u.TelegramId == message.Chat.Id && u.City != "")
-                .FirstOrDefaultAsync());
-            if (user.Status=="NoSpam")
-            {
-                var keyboard = new ReplyKeyboardMarkup(new[]
-                {
-                    new[]
-                    {
-                        new KeyboardButton("⛅️Посмотреть погоду⛅️")
-                    },
-                    new[]
-                    {
-                        new KeyboardButton("🏠Сменить город🏠")
-                    },
-                    new[]
-                    {
-                        new KeyboardButton("🚪Подписаться на рассылку🚪")
-                    }
-                });
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat,
-                    text: "Выберите действие",
-                    replyMarkup: keyboard
-                );
-            }
-            else
-            {
-                var keyboard = new ReplyKeyboardMarkup(new[]
-                {
-                    new[]
-                    {
-                        new KeyboardButton("⛅️Посмотреть погоду⛅️")
-                    },
-                    new[]
-                    {
-                        new KeyboardButton("🏠Сменить город🏠")
-                    },
-                    new[]
-                    {
-                        new KeyboardButton("🚪Отказаться от рассылки🚪")
-                    }
-                });
-                await botClient.SendTextMessageAsync(
-                    chatId: message.Chat,
-                    text: "Выберите действие",
-                    replyMarkup: keyboard
-                );
-            }
-            
-            if (update.Message.Text == "⛅️Посмотреть погоду⛅️")
-            {
-                Weather(botClient, update);
-            }
-            if (update.Message.Text == "🚪Отказаться от рассылки🚪")
-            {
-                var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
-
-                var updateInf = Builders<User>.Update.Set("Status", "NoSpam");
-
-                userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
-                    new UpdateOptions { IsUpsert = true });
-
-                botClient.SendTextMessageAsync(message.Chat,
-                    "Вы успешно отписались от рассылки");
-            }
-            if (update.Message.Text == "🚪Подписаться на рассылку🚪")
-            {
-                var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
-
-                var updateInf = Builders<User>.Update.Set("Status", "CitySelected");
-
-                userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
-                    new UpdateOptions { IsUpsert = true });
-
-                botClient.SendTextMessageAsync(message.Chat,
-                    "Вы успешно подписались на рассылку");
-            }
-
-            if (update.Message.Text == "🏠Сменить город🏠")
-            {
-                var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
-
-                var updateInf = Builders<User>.Update
-                    .Set("City", "")
-                    .Set("Status", "ChoiseCity");
-
-                userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
-                    new UpdateOptions { IsUpsert = true });
-
-                botClient.SendTextMessageAsync(message.Chat,
-                    "Введите название города на английском языке\nПример: Minsk");
-            }
-        }
 
         public static async void Weather(ITelegramBotClient botClient, Update update)
         {
