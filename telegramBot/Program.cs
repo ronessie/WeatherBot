@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Timers;
 using telegramBot.Config;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 using Timer = System.Timers.Timer;
 using Update = Telegram.Bot.Types.Update;
 using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
@@ -82,24 +83,23 @@ namespace telegramBot
         public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
             CancellationToken cancellationToken)
         {
+            var userCollection = _mongoDatabase.GetCollection<User>("Users");
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
             var message = update.Message;
             if (update.Type == UpdateType.Message)
             {
                 if (message.Text.ToLower() == "/spam" && message.Chat.Id == 975333201)
                 {
-                    var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
                     var updateInf = Builders<User>.Update.Set("Spam", "MessageWrite");
                     await botClient.SendTextMessageAsync(message.Chat,
                         "Введите текст рассылки");
-                    userCollectionAll.UpdateOne(u => u.TelegramId == 975333201, updateInf,
+                    userCollection.UpdateOne(u => u.TelegramId == 975333201, updateInf,
                         new UpdateOptions { IsUpsert = true });
                     return;
                 }
 
                 string messageSpam = "📬Рассылка📬\n";
-                var userCollectionSpam = _mongoDatabase.GetCollection<User>("Users");
-                var user = (await userCollectionSpam.Find(u => u.TelegramId == 975333201 && u.Spam == "MessageWrite")
+                var user = (await userCollection.Find(u => u.TelegramId == 975333201 && u.Spam == "MessageWrite")
                     .FirstOrDefaultAsync());
                 if (user is not null && user.Spam == "MessageWrite")
                 {
@@ -107,11 +107,10 @@ namespace telegramBot
                     var spamUpdate = Builders<User>.Update
                         .Set(f => f.Spam, "MessageReady");
 
-                    userCollectionSpam.UpdateOne(u => u.TelegramId == 975333201 && u.Spam == "MessageWrite",
+                    userCollection.UpdateOne(u => u.TelegramId == 975333201 && u.Spam == "MessageWrite",
                         spamUpdate, new UpdateOptions { IsUpsert = true });
 
-                    var collection = _mongoDatabase.GetCollection<User>("Users");
-                    var userList = await collection.Find(u => true).ToListAsync();
+                    var userList = await userCollection.Find(u => true).ToListAsync();
 
                     for (int i = 0; i < userList.Count; i++)
                     {
@@ -131,20 +130,18 @@ namespace telegramBot
                     botClient.SendTextMessageAsync(message.Chat,
                         "Что бы узнать погоду, введите название города на английском языке.\nПример: Minsk");
 
-                    var userCollectionAll = _mongoDatabase.GetCollection<User>("Users");
 
                     var updateInf = Builders<User>.Update.Set("Name", message.Chat.FirstName)
                         .Set("NickName", message.Chat.Username)
                         .Set("City", "")
                         .Set("Status", "ChoiseCity");
-                    userCollectionAll.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    userCollection.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
                         new UpdateOptions { IsUpsert = true });
                     message = update.Message;
                     return;
                 }
 
-                var userCollectionCitys = _mongoDatabase.GetCollection<User>("Users");
-                var user2 = (await userCollectionCitys
+                var user2 = (await userCollection
                     .Find(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity").FirstOrDefaultAsync());
 
                 string pattern = "[a-zA-Z]+";
@@ -154,7 +151,7 @@ namespace telegramBot
                         .Set(f => f.City, update.Message.Text)
                         .Set(f => f.Status, "CitySelected");
 
-                    userCollectionCitys.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity", 
+                    userCollection.UpdateOne(u => u.TelegramId == message.Chat.Id && u.Status == "ChoiseCity", 
                         statusUpdate, new UpdateOptions { IsUpsert = true });
                     message = update.Message;
                     var keyboard = new ReplyKeyboardMarkup(new[]
@@ -184,11 +181,10 @@ namespace telegramBot
                 }
                 if (update.Message.Text == "🚪Отказаться от рассылки🚪")
                 {
-                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
 
                     var updateInf = Builders<User>.Update.Set("Status", "NoSpam");
 
-                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    userCollection.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
                         new UpdateOptions { IsUpsert = true });
 
                     var keyboard = new ReplyKeyboardMarkup(new[]
@@ -214,11 +210,10 @@ namespace telegramBot
                 }
                 if (update.Message.Text == "🚪Подписаться на рассылку🚪")
                 {
-                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
 
                     var updateInf = Builders<User>.Update.Set("Status", "CitySelected");
 
-                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    userCollection.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
                         new UpdateOptions { IsUpsert = true });
                     var keyboard = new ReplyKeyboardMarkup(new[]
                     {
@@ -244,13 +239,11 @@ namespace telegramBot
 
                 if (update.Message.Text == "🏠Сменить город🏠")
                 {
-                    var userCollectionCity = _mongoDatabase.GetCollection<User>("Users");
-
                     var updateInf = Builders<User>.Update
                         .Set("City", "")
                         .Set("Status", "ChoiseCity");
 
-                    userCollectionCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    userCollection.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
                         new UpdateOptions { IsUpsert = true });
 
                     botClient.SendTextMessageAsync(message.Chat,
@@ -364,7 +357,17 @@ namespace telegramBot
             {
                 Console.WriteLine($"An error occurred: {e.Message}");
                 await botClient.SendTextMessageAsync(message.Chat,
-                    "Такого города нет в системе, проверьте пожалуйста правильность написания и смените город ещё раз.");
+                    "Такого города нет в системе, проверьте правильность написания");
+                var userCollectionFalseCity = _mongoDatabase.GetCollection<User>("Users");
+                var updateInf = Builders<User>.Update
+                    .Set("City", "")
+                    .Set("Status", "ChoiseCity");
+
+                userCollectionFalseCity.UpdateOne(u => u.TelegramId == message.Chat.Id, updateInf,
+                    new UpdateOptions { IsUpsert = true });
+
+                botClient.SendTextMessageAsync(message.Chat,
+                    "Введите название города на английском языке\nПример: Minsk");
             }
 
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
@@ -451,11 +454,11 @@ namespace telegramBot
                     }
                     catch (HttpRequestException e)
                     {
+                        
                         Console.WriteLine($"An error occurred: {e.Message}");
-                        await botClient.SendTextMessageAsync(userList[i].TelegramId,
-                            "Такого города нет в системе, проверьте пожалуйста правильность написания и смените город ещё раз.");
+                        /*await botClient.SendTextMessageAsync(userList[i].TelegramId,
+                            "Такого города нет в системе, проверьте пожалуйста правильность написания и смените город ещё раз.");*/
                     }
-
                     Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
                 }
             }
