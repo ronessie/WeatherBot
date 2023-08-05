@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using System.Net;
+using MongoDB.Driver;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
@@ -71,7 +72,7 @@ namespace telegramBot
             //var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");   //ТЕСТОВЫЙ ТОКЕН
             var botClient = new TelegramBotClient("5991659123:AAHSfX4vBRKa6abDFzPFXScmyTBN7yOBQog");
             DateTime currentTime = DateTime.Now;
-            if (currentTime.Hour == 10 && currentTime.Minute == 00)
+            if (currentTime.Hour == 22 && currentTime.Minute == 14)
             {
                 Spam(botClient, update);
             }
@@ -380,8 +381,7 @@ namespace telegramBot
             
             for (int i = 0; i < userList.Count; i++)
             {
-                var userCollection = _mongoDatabase.GetCollection<User>("Users");
-                var user = (await userCollection.Find(u => true).FirstOrDefaultAsync());
+                var user = userList[i];
                 var cityTest = user.City;
                 if (user is not null && user.Status == "CitySelected")
                 {
@@ -389,11 +389,14 @@ namespace telegramBot
                     var url =
                         $"http://api.openweathermap.org/data/2.5/weather?q={cityTest}&appid={apiKey}&units=metric";
 
-                    using var httpClient = new HttpClient();
-                    try
-                    {
+                        using var httpClient = new HttpClient();
                         var response = await httpClient.GetAsync(url);
-                        response.EnsureSuccessStatusCode();
+                        if (response.StatusCode != HttpStatusCode.OK)
+                        {
+                            Console.WriteLine("id "+ userList[i].TelegramId + " status "+ response.StatusCode + " cityTest " + cityTest);
+                            await botClient.SendTextMessageAsync(user.TelegramId,"Такого города нет в системе, проверьте пожалуйста правильность написания и смените город ещё раз.");
+                            continue;
+                        }
                         var responseBody = await response.Content.ReadAsStringAsync();
                         if (JsonSerializer.Deserialize<JsonDocument>(responseBody) is not { } responseJson) return;
                         var main = responseJson.RootElement.GetProperty("main");
@@ -404,20 +407,20 @@ namespace telegramBot
                         var humidity = main.GetProperty("humidity");
                         if (degrees.ToString() == "")
                         {
-                            await botClient.SendTextMessageAsync(userList[i].TelegramId,
+                            await botClient.SendTextMessageAsync(user.TelegramId,
                                 "Для получения рассылки правильно введите город.");
                         }
 
-                        await botClient.SendTextMessageAsync(userList[i].TelegramId,
+                        await botClient.SendTextMessageAsync(user.TelegramId,
                             "⛅️Погода на сегодня⛅️");
                         if (min.ToString() == max.ToString())
                         {
-                            await botClient.SendTextMessageAsync(userList[i].TelegramId,
+                            await botClient.SendTextMessageAsync(user.TelegramId,
                                 $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nОсадки: {humidity}%");
                         }
                         else
                         {
-                            await botClient.SendTextMessageAsync(userList[i].TelegramId,
+                            await botClient.SendTextMessageAsync(user.TelegramId,
                                 $"Город: {cityTest}\nГрадусы: {degrees}°C\nОщущается как: {feel}°C\nМинимальная температура: {min}°C\nМаксимальная температура: {max}°C\nОсадки: {humidity}%");
                         }
 
@@ -449,17 +452,9 @@ namespace telegramBot
 
                         if (tgmessage != "")
                         {
-                            await botClient.SendTextMessageAsync(userList[i].TelegramId, tgmessage);
+                            await botClient.SendTextMessageAsync(user.TelegramId, tgmessage);
                         }
-                    }
-                    catch (HttpRequestException e)
-                    {
-                        
-                        Console.WriteLine($"An error occurred: {e.Message}");
-                        /*await botClient.SendTextMessageAsync(userList[i].TelegramId,
-                            "Такого города нет в системе, проверьте пожалуйста правильность написания и смените город ещё раз.");*/
-                    }
-                    Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
+                        Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(update));
                 }
             }
         }
