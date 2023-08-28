@@ -33,7 +33,7 @@ namespace telegramBot
             Settings = new()
             {
                 Server = new MongoServerAddress(config.Host, config.Port),
-                Credential = MongoCredential.CreateCredential(config.DbName,
+                Credential = MongoCredential.CreateCredential(config.AuthDb,
                     config.AuthorizationName, config.AuthorizationPassword)
             };
             Client = new(Settings);
