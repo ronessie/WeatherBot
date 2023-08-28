@@ -69,8 +69,7 @@ namespace telegramBot
         static void TimerElapsed(object sender, ElapsedEventArgs e)
         {
             var update = new Update();
-            //var botClient = new TelegramBotClient("5854774014:AAGf6H0PwyQTjOAiTJ3noekH3WKs2l1_kRI");   //ТЕСТОВЫЙ ТОКЕН
-            var botClient = new TelegramBotClient("5991659123:AAHSfX4vBRKa6abDFzPFXScmyTBN7yOBQog");
+            var botClient = new TelegramBotClient(new Config<MainConfig>().Entries.Token);
             DateTime currentTime = DateTime.Now;
             if (currentTime.Hour == 10 && currentTime.Minute == 00)
             {
