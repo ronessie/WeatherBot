@@ -71,7 +71,7 @@ namespace telegramBot
             var update = new Update();
             var botClient = new TelegramBotClient(new Config<MainConfig>().Entries.Token);
             DateTime currentTime = DateTime.Now;
-            if (currentTime.Hour == 10 && currentTime.Minute == 00)
+            if (currentTime.Hour == 7 && currentTime.Minute == 00)
             {
                 Spam(botClient, update);
             }
